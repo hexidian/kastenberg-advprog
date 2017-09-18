@@ -1,6 +1,6 @@
 import math
 def sprime(n):
-    stop = int(math.sqrt(n))
+    stop = int(math.sqrt(n))+1
     if n%2==0: return False
     for i in range(3,stop,2):
         if n%i==0: return False
@@ -12,14 +12,16 @@ def primeRange(n):
         if sprime(i): workingList.append(i)
     return workingList
 def bprime(factors,n):
+    if n in factors: return True
     for i in factors:
         if n%i==0:
             return False
     return True
 def main():
     limit = input("what number should I go up to?\n")
-    maybeFactors = primeRange(int(math.sqrt(n)))
+    maybeFactors = primeRange(int(math.sqrt(limit))+1)
     total = 2
     for i in range(3,limit,2):
         if bprime(maybeFactors,i): total+=i
     print "the total of all primes up to",limit,"is",total
+main()
