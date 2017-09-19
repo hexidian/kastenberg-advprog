@@ -22,12 +22,45 @@ int merge_sort(int array[],int arrayLength)
   }
   if (arrayLength == 2)
   {
-    if (array[0] > array[1]) {return array}
+    if (array[0] > array[1]) {return array;}
     int returningArray[2]; returningArray[0] = array[1]; returningArray[1] = array[0]; //just makes an array that is the reverse of the starting array
     return returningArray;
   }
-  //TODO split up the array and then combine the sorted version
 
+  int aLength = arrayLength/2;
+  int bLength = arrayLength - aLength;
+  //now I will create two arrays with each of the halves of the main array
+  int arrayA[aLength];
+  int arrayB[bLength];
+  for (int i = 0; i < aLength; i++)
+  {
+    arrayA[i] = array[i];
+  }
+  for (int i = aLength; i < arrayLength; i++)//this goes from the end of arrayA to the end of the main array
+  {
+    arrayB[i] = array[i];
+  }
+
+  return join(arrayA,aLength,arrayB,bLength);
+
+}
+
+int join(int arrayA[],int aLength,int arrayB[],int bLength)
+{
+  int array[aLength+bLength];
+  int uptoA = 0; int uptoB = 0;//the upto variables are used as the index we have reached
+  while ((uptoA < aLength) && (uptoB < bLength))
+  {
+    if (arrayA[uptoA] < arrayB[uptoB])
+    {
+      array[uptoA+uptoB] = arrayA[uptoA];
+      uptoA++;
+    } else {
+      array[uptoA+uptoB] = arrayB[uptoB];
+      uptoB++;
+    }//else
+  }//while
+  //TODO take the remainder of the list with a remained and add it to the end of the main array
 }
 int main ()
 {
