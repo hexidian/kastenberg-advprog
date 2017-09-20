@@ -60,8 +60,22 @@ int join(int arrayA[],int aLength,int arrayB[],int bLength)
       uptoB++;
     }//else
   }//while
-  //TODO take the remainder of the list with a remained and add it to the end of the main array
-}
+  if (uptoA!=aLength)//if A is the array with remaining elements to be added
+  {
+    for (int i = uptoA+uptoB; i < aLength+bLength; i++)
+    {
+      array[i] = arrayA[uptoA];
+      uptoA++;
+    }
+  } else {//if B is the array with elements to be added
+    for (int i = uptoB+uptoA; i < aLength+bLength; i++)
+    {
+      array[i] = arrayB[uptoB];
+      uptoB++;
+    }//for
+  }//else
+  return array;
+}//int join
 int main ()
 {
   srand(time(NULL));
@@ -71,5 +85,6 @@ int main ()
   {
     startArray[i] = rand() % 40;
   }
+  PrintSimpleArray(merge_sort(startArray,ListLength));
   return 1;
 }
