@@ -14,36 +14,6 @@ void PrintSimpleArray(int array[ListLength])
   printf("\n");//this allows us to have all of the array elements on one line
   return;
 }
-int merge_sort(int array[],int arrayLength)
-{
-  if (arrayLength == 1)
-  {
-    return array;
-  }
-  if (arrayLength == 2)
-  {
-    if (array[0] > array[1]) {return array;}
-    int returningArray[2]; returningArray[0] = array[1]; returningArray[1] = array[0]; //just makes an array that is the reverse of the starting array
-    return returningArray;
-  }
-
-  int aLength = arrayLength/2;
-  int bLength = arrayLength - aLength;
-  //now I will create two arrays with each of the halves of the main array
-  int arrayA[aLength];
-  int arrayB[bLength];
-  for (int i = 0; i < aLength; i++)
-  {
-    arrayA[i] = array[i];
-  }
-  for (int i = aLength; i < arrayLength; i++)//this goes from the end of arrayA to the end of the main array
-  {
-    arrayB[i] = array[i];
-  }
-
-  return join(arrayA,aLength,arrayB,bLength);
-
-}
 
 int join(int arrayA[],int aLength,int arrayB[],int bLength)
 {
@@ -60,6 +30,7 @@ int join(int arrayA[],int aLength,int arrayB[],int bLength)
       uptoB++;
     }//else
   }//while
+
   if (uptoA!=aLength)//if A is the array with remaining elements to be added
   {
     for (int i = uptoA+uptoB; i < aLength+bLength; i++)
@@ -74,8 +45,48 @@ int join(int arrayA[],int aLength,int arrayB[],int bLength)
       uptoB++;
     }//for
   }//else
+
   return array;
 }//int join
+
+int merge_sort(int array[],int arrayLength)
+{
+  if (arrayLength <= 1)
+  {
+    return array;
+  }
+  if (arrayLength == 2)
+  {
+
+    if (array[0] > array[1]) {return array;}//if it's fine, return the original array
+    int returningArray[2]; returningArray[0] = array[1]; returningArray[1] = array[0]; //just makes an array that is the reverse of the starting array
+    return returningArray;
+
+  }
+
+  int aLength = arrayLength/2;
+  int bLength = arrayLength - aLength;
+  //now I will create two arrays with each of the halves of the main array
+  int arrayAunsorted[aLength];
+  int arrayBunsorted[bLength];
+  for (int i = 0; i < aLength; i++)
+  {
+    arrayAunsorted[i] = array[i];
+  }
+  for (int i = aLength; i < arrayLength; i++)//this goes from the end of arrayA to the end of the main array
+  {
+    arrayBunsorted[i] = array[i];
+  }
+
+  int arrayA[aLength] = merge_sort(arrayAunsorted,aLength);
+  int arrayB[bLength] = merge_sort(arrayBunsorted,bLength);
+  printf("I can get this far without a segmentation fault\n");
+
+  return join(arrayA,aLength,arrayB,bLength);
+
+}
+
+
 int main ()
 {
   srand(time(NULL));
