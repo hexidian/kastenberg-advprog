@@ -15,13 +15,13 @@ def abundRange(n):
     return abundants
 
 def isAbundSum(n,abundants):
-    for i in abundants:
-        if i>n:
+    for i in range(0,len(abundants)):
+        if abundants[i]>n:
             break
-        for j in abundants:
-            if i+j==n:
+        for j in range(i,len(abundants)):
+            if abundants[i]+abundants[j]==n:
                 return True
-            if i+j>n:
+            if abundants[i]+abundants[j]>n:
                 break
     return False
 
@@ -30,7 +30,16 @@ def abundSumsInRange(n):
     abundSums = []
     for i in range(2,n):
         if isAbundSum(i,abundants): abundSums.append(i)
+        if i%100==0: print "at",i
     return abundSums
+
+def nonAbundantSumsRange(n):
+    abundants = abundRange(n)
+    nonAbundSums = []
+    for i in range(2,n):
+        if not isAbundSum(i,abundants): nonAbundSums.append(i)
+        if i%100==0: print "at",i
+    return sum(nonAbundSums)
 
 def highestNonAbundantSum(n):
     abundants = abundRange(n)
@@ -39,4 +48,4 @@ def highestNonAbundantSum(n):
         if not isAbundSum(i,abundants): top = i
     return top
 
-print highestNonAbundantSum(5000)
+print abundSumsInRange(28123)
