@@ -21,8 +21,69 @@ class Board:
 
         return grid
 
-    def possiblePieceMoves(self,row,column):#row and column are the row and column of the piece that I am finding the possible moves of
+    def isCheckmate(self,whoseTurn):
 
+        #row and column are the row and column of the piece that I am finding the possible moves of
+
+        #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+
+
+        posMoves = self.possibleColorMoves(whoseTurn)
+
+        for i in range(len(posMoves)):
+            move = posMoves[i][:]
+            if move[1] == "P":
+                pawnThreat = self.pawnThreatening(move[2],move[3])
+                posMoves[i] = [move[0],move[1],move[2],move[3],pawnThreat[0][0],pawnThreat[0][1]]
+                if len pawnThreat > 1:#if there is a second possible move for the pawns
+                    posMoves.append([move[0],move[1],move[2],move[3],pawnThreat[1][0],pawnThreat[1][1]])
+
+        #posMoves has now been transformed into a list of moves which are not all possible,
+        #but do represent the threatened spaces
+
+        threatenedTiles = [[move[4],move[5]] for move in posMoves] #creates a list of all the threatened tiles
+
+        #TODO   if the king is threatened, iterate through all possible moves for the side of the threatened king and
+        #       then check if still in checkmate, if there is a good possibility it is only check, not checkmate
+
+
+    def pawnThreatening(self,row,column):
+        color = self.grid[row][column][1]
+        returnList
+        if color == "w":
+            try:
+                if self.grid[row+1][column-1] == "just get IndexError":
+                    pass
+                returnList.append([row+1,column-1])
+            except IndexError:
+                pass
+
+            try:
+                if self.grid[row+1][column+1] == "just get IndexError":
+                    pass
+                returnList.append([row+1,column+1])
+            except IndexError:
+                pass
+
+        else:
+            try:
+                if self.grid[row-1][column-1] == "just get IndexError":
+                    pass
+                returnList.append([row-1,column-1])
+            except IndexError:
+                pass
+
+            try:
+                if self.grid[row-1][column+1] == "just get IndexError":
+                    pass
+                returnList.append([row-1,column+1])
+            except IndexError:
+                pass
+
+        return returnList
+
+
+    def possiblePieceMoves(self,row,column):#all of the possible moves that a given piece can make
         pieceType = self.grid[row][column][0]
         pieceColor = self.grid[row][column][1]
 
@@ -39,7 +100,7 @@ class Board:
 
         return foundMoves
 
-    def possibleColorMoves(self,color):
+    def possibleColorMoves(self,color):#all of the possible moves that a player (specified by the color) can make
         foundMoves = []
 
         for row in range(8):
@@ -244,11 +305,11 @@ class Game():
             self.playGame()
 
     def isCheckmate(self): #TODO
-        return False
+        return self.board.isCheckmate(self.blackOrWhite(whoseTurn))
 
     def playGame(self):
         whoseTurn = "w"
-        while (not self.isCheckmate()):
+        while (not self.isCheckmate(whoseTurn)):
             self.board.printGrid()
             self.board.takePlayerMove(whoseTurn)
             whoseTurn = ("w" if whoseTurn == "b" else "b")
