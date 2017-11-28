@@ -21,21 +21,21 @@ class Board:
 
         return grid
 
-    def isCheckmate(self,whoseTurn):
+    def isCheck(self,whoseTurn):
 
         #row and column are the row and column of the piece that I am finding the possible moves of
 
         #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
 
 
-        posMoves = self.possibleColorMoves(whoseTurn)
+        posMoves = self.possibleColorMoves(("w" if whoseTurn == "b" else "b"))
 
         for i in range(len(posMoves)):
             move = posMoves[i][:]
             if move[1] == "P":
                 pawnThreat = self.pawnThreatening(move[2],move[3])
                 posMoves[i] = [move[0],move[1],move[2],move[3],pawnThreat[0][0],pawnThreat[0][1]]
-                if len pawnThreat > 1:#if there is a second possible move for the pawns
+                if len(pawnThreat) > 1:#if there is a second possible move for the pawns
                     posMoves.append([move[0],move[1],move[2],move[3],pawnThreat[1][0],pawnThreat[1][1]])
 
         #posMoves has now been transformed into a list of moves which are not all possible,
@@ -43,9 +43,32 @@ class Board:
 
         threatenedTiles = [[move[4],move[5]] for move in posMoves] #creates a list of all the threatened tiles
 
-        #TODO   if the king is threatened, iterate through all possible moves for the side of the threatened king and
-        #       then check if still in checkmate, if there is a good possibility it is only check, not checkmate
 
+        for row in range(8):
+            for column in range(8):
+                if (self.grid[row][column]=="K"+whoseTurn) and ([row,column] in threatenedTiles):
+                    return True
+
+        return False
+
+    def isCheckmate(self,whoseTurn):
+
+        if not self.isCheck(whoseTurn):
+            return False
+
+        posMoves = self.possibleColorMoves(whoseTurn)
+
+        for move in posMoves:
+            self.movePiece(move)
+            if not self.isCheck(whoseTurn):     #if the move has fixed the situation
+                print "CHECK"
+                return False
+
+        return True
+
+    def undoMove(self):
+
+        self.grid = self.lastGrid[:]
 
     def pawnThreatening(self,row,column):
         color = self.grid[row][column][1]
@@ -105,8 +128,11 @@ class Board:
 
         for row in range(8):
             for column in range(8):
-                if self.grid[row][column][1]==color:
-                    foundMoves.extend(self.possiblePieceMoves(row,column))
+                try:
+                    if self.grid[row][column][1]==color:
+                        foundMoves.extend(self.possiblePieceMoves(row,column))
+                except:
+                    pass
 
         return foundMoves
 
@@ -177,30 +203,18 @@ class Board:
             return False
 
 
-        if move[2] < move[4]:
-            if move[3] < move[5]:
-                for row in range(move[2]+1,move[4]):
-                    for column in range(move[3]+1,move[5]):
-                        if self.grid[row][column] != "":
-                            return False
-            else:
-                for row in range(move[2]+1,move[4]):
-                    for column in range(move[5]+1,move[3]):
-                        if self.grid[row][column] != "":
-                            return False
-        else:
-            if move[3] < move[5]:
-                for row in range(move[4]+1,move[2]):
-                    for column in range(move[3]+1,move[5]):
-                        if self.grid[row][column] != "":
-                            return False
-            else:
-                for row in range(move[4]+1,move[2]):
-                    for column in range(move[5]+1,move[3]):
-                        if self.grid[row][column] != "":
-                            return False
+        distance = abs(move[2]-move[4])
+
+        rowDirection = distance/(move[4]-move[2])
+        columnDirection = distance/(move[5]-move[3])
+
+        for i in range(1,distance):
+            if self.grid[move[2] + (i*rowDirection)][move[3] + (i*columnDirection)]!="":
+                return False
+
         try:
-            if self.grid[move[4]][move[5]][1] == move[0]: return False  #if there is a same-colored piece where you want to go
+            if self.grid[move[4]][move[5]][1] == move[0]:
+                return False  #if there is a same-colored piece where you want to go
         except:
             pass
 
@@ -220,7 +234,7 @@ class Board:
 
         elif move[0]=="b":
             isStartingSpot = move[2]==6 #a boolean for if it is in the starting possition
-            if ((move[2]-move[4] == 1) or (isStartingSpot and (move[2]-move[4] == 1)) and (move[3]==move[5])): #basically if it is moving forward by one, or by two if in the starting spot and staying in the same column
+            if ((move[2]-move[4] == 1) or (isStartingSpot and (move[2]-move[4] == 2)) and (move[3]==move[5])): #basically if it is moving forward by one, or by two if in the starting spot and staying in the same column
                 return True
             elif (move[2]-move[4] == 1) and abs(move[3]-move[5]):#this is beautiful because 1 is true, and I want to see if it is moving one to the side
                 try:
@@ -264,6 +278,8 @@ class Board:
 
         #NOTE only call this function if you have already checked if the move is a legal move
 
+        self.lastGrid = self.grid[:]
+
         self.grid[move[2]][move[3]] = ""
         self.grid[move[4]][move[5]] = move[1]+move[0]
 
@@ -304,17 +320,14 @@ class Game():
             self.gameType = 2
             self.playGame()
 
-    def isCheckmate(self): #TODO
-        return self.board.isCheckmate(self.blackOrWhite(whoseTurn))
-
     def playGame(self):
         whoseTurn = "w"
-        while (not self.isCheckmate(whoseTurn)):
+        while (not self.board.isCheckmate(whoseTurn)):
             self.board.printGrid()
             self.board.takePlayerMove(whoseTurn)
             whoseTurn = ("w" if whoseTurn == "b" else "b")
 
-
+        print "checkmate"
 def main():
     game = Game()
 
