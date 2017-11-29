@@ -43,11 +43,12 @@ class Board:
 
         threatenedTiles = [[move[4],move[5]] for move in posMoves] #creates a list of all the threatened tiles
 
-
         for row in range(8):
             for column in range(8):
                 if (self.grid[row][column]=="K"+whoseTurn) and ([row,column] in threatenedTiles):
                     return True
+
+        print "\nNO CHECK YET\n"
 
         return False
 
@@ -61,8 +62,10 @@ class Board:
         for move in posMoves:
             self.movePiece(move)
             if not self.isCheck(whoseTurn):     #if the move has fixed the situation
-                print "CHECK"
+                self.undoMove()
+                print "\nCHECK\n"
                 return False
+            self.undoMove()
 
         return True
 
@@ -72,7 +75,7 @@ class Board:
 
     def pawnThreatening(self,row,column):
         color = self.grid[row][column][1]
-        returnList
+        returnList = []
         if color == "w":
             try:
                 if self.grid[row+1][column-1] == "just get IndexError":
@@ -117,7 +120,8 @@ class Board:
         for rowTo in range(8):
             for columnTo in range(8):
                 testingMove = baseMove[:]
-                testingMove.append(rowTo).append(columnTo)
+                testingMove.append(rowTo)
+                testingMove.append(columnTo)
                 if self.isLegalMove(testingMove):
                     foundMoves.append(testingMove)
 
