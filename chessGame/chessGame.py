@@ -306,11 +306,26 @@ class Board:
         self.movePiece(move)
 
     def printGrid(self): #temporary, not a very nice looking print; TODO make more nice looking
-        print "  " + str([(" "+str(i)+" ") for i in range(8)])+"\n"
+
+        top = "   0  1  2  3  4  5  6  7"
+        print top
+
+        for i in range(8)[::-1]:
+            row = self.grid[i]
+            printRow = str(i)+" "
+            for square in row:
+                if len(square)>1:
+                    printRow = printRow + square + " "
+                else:
+                    printRow = printRow + " - "
+            print printRow
+
+
+'''        print "  " + str([(" "+str(i)+" ") for i in range(8)])+"\n"
         for y in range(8)[::-1]:
             row = self.grid[y]
             print str(y)+" "+str([(row[i]+" " if len(row[i])>0 else "   ") for i in range(8)])+"\n"
-
+'''
 class Game():
 
     def __init__(self):
