@@ -27,7 +27,6 @@ class Board:
 
         #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
 
-
         posMoves = self.possibleColorMoves(("w" if whoseTurn == "b" else "b"))
 
         for i in range(len(posMoves)):
@@ -48,8 +47,6 @@ class Board:
                 if (self.grid[row][column]=="K"+whoseTurn) and ([row,column] in threatenedTiles):
                     return True
 
-        print "\nNO CHECK YET\n"
-
         return False
 
     def isCheckmate(self,whoseTurn):
@@ -63,6 +60,7 @@ class Board:
             self.movePiece(move)
             if not self.isCheck(whoseTurn):     #if the move has fixed the situation
                 self.undoMove()
+                print "one possible move is",move
                 print "\nCHECK\n"
                 return False
             self.undoMove()
@@ -71,7 +69,7 @@ class Board:
 
     def undoMove(self):
 
-        self.grid = self.lastGrid[:]
+        self.grid = self.lastGrid[:][:]
 
     def pawnThreatening(self,row,column):
         color = self.grid[row][column][1]
@@ -228,8 +226,10 @@ class Board:
         if move[0]=="w":#moving as a white piece is opposite of moving as a black piece, so it will be programmed seperately
             isStartingSpot = move[2]==1 #a boolean for if it is in the starting possition
             if ((move[4]-move[2] == 1) or (isStartingSpot and (move[4]-move[2] == 2))) and (move[3]==move[5]):#basically if it is moving forward by one, or by two if in the starting spot and staying in the same column
+                if len(self.grid[move[4]][move[5]]) > 1:#if there is a piece there, because the pawn cannot take a piece by doing this type of move
+                    return False
                 return True
-            elif (move[4]-move[2] == 1) and abs(move[3]-move[5]):#this is beautiful because 1 is true, and I want to see if it is moving one to the side
+            elif (move[4]-move[2] == 1) and (abs(move[3]-move[5])==1):
                 try:
                     if self.grid[move[4]][move[5]][1] == "b":#if it is going to an enemy piece
                         return True
@@ -239,8 +239,10 @@ class Board:
         elif move[0]=="b":
             isStartingSpot = move[2]==6 #a boolean for if it is in the starting possition
             if ((move[2]-move[4] == 1) or (isStartingSpot and (move[2]-move[4] == 2)) and (move[3]==move[5])): #basically if it is moving forward by one, or by two if in the starting spot and staying in the same column
+                if len(self.grid[move[4]][move[5]]) > 1:#if there is a piece there, because the pawn cannot take a piece by doing this type of move
+                    return False
                 return True
-            elif (move[2]-move[4] == 1) and abs(move[3]-move[5]):#this is beautiful because 1 is true, and I want to see if it is moving one to the side
+            elif (move[2]-move[4] == 1) and (abs(move[3]-move[5])==2):#this is beautiful because 1 is true, and I want to see if it is moving one to the side
                 try:
                     if self.grid[move[4]][move[5]][1] == "w":#if it is going to an enemy piece
                         return True
@@ -282,7 +284,7 @@ class Board:
 
         #NOTE only call this function if you have already checked if the move is a legal move
 
-        self.lastGrid = self.grid[:]
+        self.lastGrid = [self.grid[i][:] for i in range(8)]#because python takes over the control of pointers and such, this is the only way to make it not update with self.grid
 
         self.grid[move[2]][move[3]] = ""
         self.grid[move[4]][move[5]] = move[1]+move[0]
@@ -305,11 +307,9 @@ class Board:
 
     def printGrid(self): #temporary, not a very nice looking print; TODO make more nice looking
         print "  " + str([(" "+str(i)+" ") for i in range(8)])+"\n"
-        for y in range(8):
+        for y in range(8)[::-1]:
             row = self.grid[y]
             print str(y)+" "+str([(row[i]+" " if len(row[i])>0 else "   ") for i in range(8)])+"\n"
-
-
 
 class Game():
 
@@ -319,7 +319,7 @@ class Game():
         if input("how many players?")==1:
             self.gameType = 1
             self.blackOrWhite = raw_input("black or white? (b/w):")
-            self.playSinglePlayer()#TODO
+            self.playSinglePlayer()
         else:
             self.gameType = 2
             self.playGame()
@@ -331,7 +331,12 @@ class Game():
             self.board.takePlayerMove(whoseTurn)
             whoseTurn = ("w" if whoseTurn == "b" else "b")
 
+
+        self.board.printGrid()
         print "checkmate"
+
+    def playSinglePlayer(self):#TODO
+        pass
 def main():
     game = Game()
 
