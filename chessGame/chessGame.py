@@ -4,9 +4,14 @@ class Board:
 
     def __init__(self):
 
-        self.pieceStartOrder = ["R","N","B","K","Q","B","N","R"]
+        self.pieceStartOrder = ["R","N","B","Q","K","B","N","R"]
 
         self.grid = self.makeGrid()
+
+        self.whiteCastleableSpots = [[0,0],[0,7]]
+        self.blackCastleableSpots = [[7,0],[7,7]]
+
+        self.gridCache = []
 
     def makeGrid(self):
 
@@ -69,7 +74,9 @@ class Board:
 
     def undoMove(self):
 
-        self.grid = self.lastGrid[:][:]
+        self.grid = [i[:] for i in self.gridCache[-1]]
+
+        self.gridCache.pop(-1)
 
     def pawnThreatening(self,row,column):
         color = self.grid[row][column][1]
@@ -284,26 +291,99 @@ class Board:
 
         #NOTE only call this function if you have already checked if the move is a legal move
 
-        self.lastGrid = [self.grid[i][:] for i in range(8)]#because python takes over the control of pointers and such, this is the only way to make it not update with self.grid
+        #first I am putting the code relevant to castling; NOTE: this function is not to be used for castling
+
+        if move[1] == "R":
+            if move[0] == "w":
+                if [move[2],move[3]] in self.whiteCastleableSpots:
+                    self.whiteCastleableSpots.remove(move[2],move[3])
+            elif [move[2],move[3]] in self.blackCastleableSpots:
+                self.blackCastleableSpots.remove(move[2],move[3])
+
+        if move[1] == "K":
+            if move[0] == "w":
+                self.whiteCastleableSpots = []
+            else:
+                self.blackCastleableSpots = []
+
+        self.gridCache.append([i[:] for i in self.grid])#because python takes over the control of pointers and such, this is the only way to make it not update with self.grid
 
         self.grid[move[2]][move[3]] = ""
         self.grid[move[4]][move[5]] = move[1]+move[0]
+
+    def isLegalCastle(self,color,move):#castles are in the format ["castle",withRookRow,withRookCol]
+
+        #it is highly advised that you look at a chess board while reading this in order to understand it
+        #I had to look at one the whole time I programmed it anyway
+
+        if color == "w":
+            if not ([move[1],move[2]] in self.whiteCastleableSpots):
+                return False
+        else:
+            if not ([move[1],move[2]] in self.blackCastleableSpots):
+                return False
+
+        #now we know if the pieces have been moved
+
+        row = (0 if color=="w" else 7)#the row that this will be happening on
+
+        if move[2] == 0:#if it is the left rook
+            for col in range(1,4):
+                if not (self.grid[row][col] == ""):
+                    print "in the way"
+                    return False
+        else:
+            for col in range(5,7):
+                if not (self.grid[row][col] == ""):
+                    print "in the way"
+                    return False
+
+        return True
+
+    def castleMove(self,move):#castles are in the format ["castle",withRookRow,withRookCol]
+
+        #NOTE this function only gets called if it is already determined to be a legal move
+
+        self.gridCache.append([i[:] for i in self.grid])#again, this is to get around python's stupid (not really stupid, still simpler than C) pointer stuff
+
+
+        color = ("w" if move[1] == 0 else "b")
+
+        kingCoords = [(2 if move[2] == 0 else 6),move[1]]
+        rookCoords = [(3 if move[2] == 0 else 5),move[1]]
+
+        self.grid[move[1]][kingCoords[0]] = "K"+color
+        self.grid[move[1]][4] = ""
+        self.grid[move[1]][rookCoords[0]] = "R"+color
+        self.grid[move[1]][move[2]] = ""
+
 
     def takePlayerMove(self,colorsTurn):
         while 1: #because python doesn't have any heckin' do while loops
             print "it is "+colorsTurn+"'s turn\n"
             rawMove = raw_input("input move in the format:\nPieceAbbreviation (Knights are 'N') row column rowTo columnTo\n\n>>>").split() #currently in the format ['piece',row,column,rowTo,columnTo]
 
-            move = [colorsTurn]
-            for i in range(1,5):
-                rawMove[i] = int(rawMove[i])
-            move.extend(rawMove)
-            if self.isLegalMove(move):
-                break
-            else:
-                print "that move was not a legal move, please check how you formated it"
+            if rawMove[0].lower() == "castle":#castles are in the format ["castle",withRookRow,withRookCol]
+                rawMove[1],rawMove[2] = int(rawMove[1]),int(rawMove[2])
+                if self.isLegalCastle(colorsTurn,rawMove):
+                    self.castleMove(rawMove)
+                    break
+                else:
+                    print "that move was not a legal move, please check how you formated it"
 
-        self.movePiece(move)
+
+            else:
+
+                move = [colorsTurn]
+                for i in range(1,5):
+                    rawMove[i] = int(rawMove[i])
+                move.extend(rawMove)
+                if self.isLegalMove(move):
+                    self.movePiece(move)
+                    break
+                else:
+                    print "that move was not a legal move, please check how you formated it"
+
 
     def printGrid(self): #temporary, not a very nice looking print; TODO make more nice looking
 
@@ -350,8 +430,92 @@ class Game():
         self.board.printGrid()
         print "checkmate"
 
-    def playSinglePlayer(self):#TODO
-        pass
+    def playSinglePlayer(self):
+        playerColor = raw_input("\nwhat color do you want to play as?\n>>>")
+        compColor = ("b" if playerColor == "w" else "w")
+
+        whoseTurn = "b"#start as black because it switches colors at the start of the loop
+
+        while (not self.board.isCheckmate()):
+            whoseTurn = ("b" if whoseTurn == "w" else "w")
+            if whoseTurn == playerColor:
+                self.board.printGrid
+                self.board.takePlayerMove()
+            else:
+                self.board.movePiece(self.bestMove())
+
+    def evaluateMove(self,move,movesLeft,isComp):
+
+        #all that is done in this function is call itself recursively and take the worst or best case depending on if it is the computer's turn or the player's turn
+
+        if movesLeft > 0:
+            self.movePiece(move)
+            color = ("b" if move[0] == "w" else "w")
+            possMoves = self.possibleColorMoves(color)
+            if isComp:
+                best = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
+                for move in possMoves:
+                    curEval = self.evaluateMove(move,movesLeft-1,(not isComp))
+                    if curEval > best[0]: best = curEval
+                return best
+            else:
+                worst = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
+                for move in possMoves:
+                    curEval = self.evaluateMove(move,movesLeft-1,(not isComp))
+                    if curEval < worst:
+                        worst = curEval
+                return worst
+        else:#this is now if there are no more moves to look into the future
+            compColor = (move[0] if isComp else ("w" if move[0]=="b" else "b"))
+            return self.evaluateBoard(compColor)
+
+    def evaluateBoard(self,forColor):#evaluates the worth of the board for a given color
+
+        value = 0
+
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if len(piece)==0:
+                    continue
+                elif piece[1] == forColor:
+                    value += self.evaluatePieceValue(row,col)
+                else:
+                    value -= self.evaluatePieceValue(row,col)
+
+        return value
+
+    def evaluatePieceValue(self,row,col):
+        piece = self.grid[row][col]
+
+        distance = (row if piece[0]=="w" else (7-row))
+
+        #TODO: get better values for the following values from machine learning
+
+        startVals = {"P":1,"Q":0,"B":0,"K":0,"R":0,"N":0}
+        distanceCoefficients = {"P":2,"Q":1,"B":1,"K":1,"R":1,"N":1}
+
+
+    def bestMove(self,color):#compTurn is boolean for if it is the computer's turn
+        possMoves = self.possibleColorMoves(color)
+        best = [evaluateMove(possMoves[0]),possMoves[0]]
+        for move in possMoves:
+            curEval = self.evaluateMove(move,3,True)
+            if curEval > best[0]:
+                best = [curEval,move]
+        return best
+
+        #TODO:  #make an evaluateMove function which will evaluate the worth
+                #of the board to a given player. In order to do this I will need a 'cache'
+                #of some sort for the Board.undoMove function. It will need to be able to undo
+                #up to 5 moves, and it would be best to have the cache be at least 6 large.
+                #the evaluate function only needs to be applied to the final moves.
+
+                #also, you won't need to save all of the moves made in a sequence, just the first
+                #one and it's corresponding evaluted value. If you find a set of moves that are
+                #better than the previous best, you just replace it. Like any other function you
+                #have made which finds the highest or lowest value for something
+
 def main():
     game = Game()
 
