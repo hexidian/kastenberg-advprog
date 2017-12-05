@@ -1,5 +1,7 @@
 #NOTE ALL KNIGHTS ARE REFERRED TO WITH THE LETTER N BECAUSE KING STARTS WITH K
 
+#TODO: add only being able to castle when not in check;
+
 class Board:
 
     def __init__(self):
@@ -114,7 +116,7 @@ class Board:
         return returnList
 
 
-    def possiblePieceMoves(self,row,column):#all of the possible moves that a given piece can make
+    def possiblePieceMoves2(self,row,column):#all of the possible moves that a given piece can make
         pieceType = self.grid[row][column][0]
         pieceColor = self.grid[row][column][1]
 
@@ -127,27 +129,125 @@ class Board:
                 testingMove = baseMove[:]
                 testingMove.append(rowTo)
                 testingMove.append(columnTo)
-                if self.isLegalMove(testingMove):
-                    foundMoves.append(testingMove)
+                if self.isLegalMove(testingMove,False):
+                    print testingMove,"was a duplicate"
+
 
         return foundMoves
+
+    def possiblePieceMoves(self,row,col):
+        piece = self.grid[row][col]
+        pieceType = piece[0]
+        pieceColor = piece[1]
+        if pieceType == "Q":
+            moves = self.possibleRookMoves(pieceColor,row,col)
+            moves.extend(self.possibleBishopMoves(pieceColor,row,col))
+            return moves
+        return {"R":self.possibleRookMoves(pieceColor,row,col),"N":self.possibleKnightMoves(pieceColor,row,col),"B":self.possibleBishopMoves(pieceColor,row,col),"K":self.possibleKingMoves(pieceColor,row,col),"P":self.possiblePawnMoves(pieceColor,row,col)}[pieceType]
+
+    def possiblePawnMoves(self,color,row,col):
+        returnList = []
+        piece = self.grid[row][col]
+        for a in range(row-2,row+3):
+            for b in range(col-1,col+2):
+                move = [piece[1],piece[0],row,col,a,b]
+                if self.isLegalPawnMove(move):
+                    returnList.append(move)
+        return returnList
+
+    def possibleBishopMoves(self,color,row,col):
+        returnList = []
+        piece = self.grid[row][col]
+
+        for a in range(8):
+            for b in range(8):
+                move = [piece[1],piece[0],row,col,a,b]
+                if self.isLegalBishopMove(move):
+                    returnList.append(move[:])
+        return returnList
+
+    def possibleRookMoves(self,color,row,col):
+        returnList = []
+        piece = self.grid[row][col]
+
+        for i in range(8):
+            move = [piece[1],piece[0],row,col,i,col]
+            if self.isLegalRookMove(move):
+                returnList.append(move[:])
+            move[4] = row
+            move[5] = i
+            if self.isLegalRookMove(move):
+                returnList.append(move[:])
+
+        return returnList
+
+    def possibleKnightMoves(self,color,row,col):
+        returnList = []
+        piece = self.grid[row][col]
+
+        move = [piece[1],piece[0],row,col,row+1,col+2]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row-1,col+2]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row+1,col-2]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row-1,col-2]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row+2,col+1]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row+2,col-1]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row-2,col+1]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        move = [piece[1],piece[0],row,col,row-2,col-1]
+        if self.isLegalKnightMove(move): returnList.append(move[:])
+
+        return returnList
+
+    def possibleKingMoves(self,color,row,col):
+        returnList = []
+        piece = self.grid[row][col]
+
+        for a in range(row-1,row+2):
+            for b in range(col-1,col+2):
+                move = [piece[1],piece[0],row,col,a,b]
+                if self.isLegalKingMove(move):
+                    returnList.append(move)
+
+        return returnList
 
     def possibleColorMoves(self,color):#all of the possible moves that a player (specified by the color) can make
         foundMoves = []
 
         for row in range(8):
             for column in range(8):
-                try:
+                piece = self.grid[row][column]
+                if len(piece) != 0:
                     if self.grid[row][column][1]==color:
-                        foundMoves.extend(self.possiblePieceMoves(row,column))
-                except:
-                    pass
+                        pieceMoves = self.possiblePieceMoves(row,column)
+                        if len(pieceMoves)!=0:
+                            foundMoves.extend(pieceMoves)
+
+
 
         return foundMoves
 
 
-    def isLegalMove(self,move): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+    def isLegalMove(self,move,safeMove): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
         pieceType = move[1]
+        if safeMove:
+            if self.isCheck(move[0]):
+                self.movePiece(move)
+                if self.isCheck(move[0]):
+                    return False
+                self.undoMove()
 
         if not (pieceType+move[0] == self.grid[move[2]][move[3]]): #the piece has to be there
             return False
@@ -173,6 +273,7 @@ class Board:
             return (self.isLegalBishopMove(move) or self.isLegalRookMove(move))
 
     def isLegalKingMove(self,move): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+        if move[4]>7 or move[5]>7 or move[4]<0 or move[5]<0: return False
         deltaRow = abs(move[2]-move[4])
         deltaCol = abs(move[3]-move[5])
         movementCorrect = False
@@ -190,6 +291,8 @@ class Board:
         return movetoSafe and movementCorrect
 
     def isLegalKnightMove(self,move): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+        if move[4]>7 or move[5]>7 or move[4]<0 or move[5]<0: return False
+
         deltaRow,deltaCol = abs(move[2]-move[4]),abs(move[3]-move[5])
         movementCorrect = False#they need to be false by default, if they should be true I will make them true
         gotoSafe = False
@@ -208,6 +311,10 @@ class Board:
 
 
     def isLegalBishopMove(self,move): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+        if move[4]>7 or move[5]>7 or move[4]<0 or move[5]<0: return False
+
+        if move[2]-move[4] == 0:
+            return False
         if not (abs(move[2]-move[4]) == abs(move[3]-move[5])):
             return False
 
@@ -230,6 +337,8 @@ class Board:
         return True
 
     def isLegalPawnMove(self,move): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+        if move[4]>7 or move[5]>7 or move[4]<0 or move[5]<0: return False
+
         if move[0]=="w":#moving as a white piece is opposite of moving as a black piece, so it will be programmed seperately
             isStartingSpot = move[2]==1 #a boolean for if it is in the starting possition
             if ((move[4]-move[2] == 1) or (isStartingSpot and (move[4]-move[2] == 2))) and (move[3]==move[5]):#basically if it is moving forward by one, or by two if in the starting spot and staying in the same column
@@ -258,6 +367,7 @@ class Board:
         return False
 
     def isLegalRookMove(self,move): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+        if move[4]>7 or move[5]>7 or move[4]<0 or move[5]<0: return False
 
         if not ((move[2]==move[4]) or (move[3]==move[5])): #makes sure that it is either the same row or column
             return False
@@ -296,9 +406,9 @@ class Board:
         if move[1] == "R":
             if move[0] == "w":
                 if [move[2],move[3]] in self.whiteCastleableSpots:
-                    self.whiteCastleableSpots.remove(move[2],move[3])
+                    self.whiteCastleableSpots.remove([move[2],move[3]])
             elif [move[2],move[3]] in self.blackCastleableSpots:
-                self.blackCastleableSpots.remove(move[2],move[3])
+                self.blackCastleableSpots.remove([move[2],move[3]])
 
         if move[1] == "K":
             if move[0] == "w":
@@ -378,14 +488,14 @@ class Board:
                 for i in range(1,5):
                     rawMove[i] = int(rawMove[i])
                 move.extend(rawMove)
-                if self.isLegalMove(move):
+                if self.isLegalMove(move,True):
                     self.movePiece(move)
                     break
                 else:
                     print "that move was not a legal move, please check how you formated it"
 
 
-    def printGrid(self): #temporary, not a very nice looking print; TODO make more nice looking
+    def printGrid(self):
 
         top = "   0  1  2  3  4  5  6  7"
         print top
@@ -413,7 +523,6 @@ class Game():
 
         if input("how many players?")==1:
             self.gameType = 1
-            self.blackOrWhite = raw_input("black or white? (b/w):")
             self.playSinglePlayer()
         else:
             self.gameType = 2
@@ -436,27 +545,28 @@ class Game():
 
         whoseTurn = "b"#start as black because it switches colors at the start of the loop
 
-        while (not self.board.isCheckmate()):
+        while (not self.board.isCheckmate(whoseTurn)):
             whoseTurn = ("b" if whoseTurn == "w" else "w")
             if whoseTurn == playerColor:
-                self.board.printGrid
-                self.board.takePlayerMove()
+                self.board.printGrid()
+                self.board.takePlayerMove(whoseTurn)
             else:
-                self.board.movePiece(self.bestMove())
+                self.board.movePiece(self.bestMove(compColor))
 
     def evaluateMove(self,move,movesLeft,isComp):
 
         #all that is done in this function is call itself recursively and take the worst or best case depending on if it is the computer's turn or the player's turn
 
         if movesLeft > 0:
-            self.movePiece(move)
+            self.board.movePiece(move)
             color = ("b" if move[0] == "w" else "w")
-            possMoves = self.possibleColorMoves(color)
+            possMoves = self.board.possibleColorMoves(color)
             if isComp:
                 best = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
                 for move in possMoves:
                     curEval = self.evaluateMove(move,movesLeft-1,(not isComp))
-                    if curEval > best[0]: best = curEval
+                    if curEval > best: best = curEval
+                self.board.undoMove()
                 return best
             else:
                 worst = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
@@ -464,6 +574,7 @@ class Game():
                     curEval = self.evaluateMove(move,movesLeft-1,(not isComp))
                     if curEval < worst:
                         worst = curEval
+                self.board.undoMove()
                 return worst
         else:#this is now if there are no more moves to look into the future
             compColor = (move[0] if isComp else ("w" if move[0]=="b" else "b"))
@@ -475,7 +586,7 @@ class Game():
 
         for row in range(8):
             for col in range(8):
-                piece = self.grid[row][col]
+                piece = self.board.grid[row][col]
                 if len(piece)==0:
                     continue
                 elif piece[1] == forColor:
@@ -486,35 +597,26 @@ class Game():
         return value
 
     def evaluatePieceValue(self,row,col):
-        piece = self.grid[row][col]
+        piece = self.board.grid[row][col]
 
         distance = (row if piece[0]=="w" else (7-row))
 
         #TODO: get better values for the following values from machine learning
 
-        startVals = {"P":1,"Q":0,"B":0,"K":0,"R":0,"N":0}
-        distanceCoefficients = {"P":2,"Q":1,"B":1,"K":1,"R":1,"N":1}
+        startVals = {"P":2,"Q":0,"B":0,"K":0,"R":0,"N":0}
+        distanceCoefficients = {"P":1,"Q":0,"B":0,"K":0,"R":0,"N":0}
+
+        return (startVals[piece[0]]+(distanceCoefficients[piece[0]]*distance))
 
 
     def bestMove(self,color):#compTurn is boolean for if it is the computer's turn
-        possMoves = self.possibleColorMoves(color)
-        best = [evaluateMove(possMoves[0]),possMoves[0]]
+        possMoves = self.board.possibleColorMoves(color)
+        best = [self.evaluateMove(possMoves[0],2,True),possMoves[0]]
         for move in possMoves:
-            curEval = self.evaluateMove(move,3,True)
+            curEval = self.evaluateMove(move,2,True)
             if curEval > best[0]:
                 best = [curEval,move]
-        return best
-
-        #TODO:  #make an evaluateMove function which will evaluate the worth
-                #of the board to a given player. In order to do this I will need a 'cache'
-                #of some sort for the Board.undoMove function. It will need to be able to undo
-                #up to 5 moves, and it would be best to have the cache be at least 6 large.
-                #the evaluate function only needs to be applied to the final moves.
-
-                #also, you won't need to save all of the moves made in a sequence, just the first
-                #one and it's corresponding evaluted value. If you find a set of moves that are
-                #better than the previous best, you just replace it. Like any other function you
-                #have made which finds the highest or lowest value for something
+        return best[1]
 
 def main():
     game = Game()
