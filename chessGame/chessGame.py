@@ -518,7 +518,11 @@ class Board:
 '''
 class Game():
 
-    def __init__(self):
+    def __init__(self,tuningValues,testing):
+        if testing:
+            self.playOther()
+        self.pieceValues = [tuningValues[i] for i in range(6)]
+        self.movementCoefficients = [tuningValues[i] for i in range(6,12)]
         self.board = Board()
 
         if input("how many players?")==1:
@@ -527,6 +531,9 @@ class Game():
         else:
             self.gameType = 2
             self.playGame()
+
+    def playOther(self):
+        pass
 
     def playGame(self):
         whoseTurn = "w"
@@ -603,8 +610,8 @@ class Game():
 
         #TODO: get better values for the following values from machine learning
 
-        startVals = {"P":2,"Q":0,"B":0,"K":0,"R":0,"N":0}
-        distanceCoefficients = {"P":1,"Q":0,"B":0,"K":0,"R":0,"N":0}
+        startVals = {"P":self.pieceValues[0],"Q":self.pieceValues[1],"B":self.pieceValues[2],"K":self.pieceValues[3],"R":self.pieceValues[4],"N":self.pieceValues[5]}
+        distanceCoefficients = {"P":self.movementCoefficients[0],"Q":self.movementCoefficients[1],"B":self.movementCoefficients[2],"K":self.movementCoefficients[3],"R":self.movementCoefficients[4],"N":self.movementCoefficients[5]}
 
         return (startVals[piece[0]]+(distanceCoefficients[piece[0]]*distance))
 
@@ -618,8 +625,6 @@ class Game():
                 best = [curEval,move]
         return best[1]
 
-def main():
-    game = Game()
 
 if __name__ == "__main__":
-    main()
+    game = Game([1,2,3,4,5,1,2,3,4,5],False)
