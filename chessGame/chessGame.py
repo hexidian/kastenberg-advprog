@@ -34,7 +34,7 @@ class Board:
 
         #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
 
-        posMoves = self.possibleColorMoves(("w" if whoseTurn == "b" else "b"))
+        posMoves = self.possibleColorMoves(("w" if whoseTurn == "b" else "b"),False)
 
         for i in range(len(posMoves)):
             move = posMoves[i][:]
@@ -61,7 +61,7 @@ class Board:
         if not self.isCheck(whoseTurn):
             return False
 
-        posMoves = self.possibleColorMoves(whoseTurn)
+        posMoves = self.possibleColorMoves(whoseTurn,False)
 
         for move in posMoves:
             self.movePiece(move)
@@ -135,95 +135,95 @@ class Board:
 
         return foundMoves
 
-    def possiblePieceMoves(self,row,col):
+    def possiblePieceMoves(self,row,col,safeMode):
         piece = self.grid[row][col]
         pieceType = piece[0]
         pieceColor = piece[1]
         if pieceType == "Q":
-            moves = self.possibleRookMoves(pieceColor,row,col)
-            moves.extend(self.possibleBishopMoves(pieceColor,row,col))
+            moves = self.possibleRookMoves(pieceColor,row,col,safeMode)
+            moves.extend(self.possibleBishopMoves(pieceColor,row,col,safeMode))
             return moves
-        return {"R":self.possibleRookMoves(pieceColor,row,col),"N":self.possibleKnightMoves(pieceColor,row,col),"B":self.possibleBishopMoves(pieceColor,row,col),"K":self.possibleKingMoves(pieceColor,row,col),"P":self.possiblePawnMoves(pieceColor,row,col)}[pieceType]
+        return {"R":self.possibleRookMoves(pieceColor,row,col,safeMode),"N":self.possibleKnightMoves(pieceColor,row,col,safeMode),"B":self.possibleBishopMoves(pieceColor,row,col,safeMode),"K":self.possibleKingMoves(pieceColor,row,col,safeMode),"P":self.possiblePawnMoves(pieceColor,row,col,safeMode)}[pieceType]
 
-    def possiblePawnMoves(self,color,row,col):
+    def possiblePawnMoves(self,color,row,col,safeMode):
         returnList = []
         piece = self.grid[row][col]
         for a in range(row-2,row+3):
             for b in range(col-1,col+2):
                 move = [piece[1],piece[0],row,col,a,b]
-                if self.isLegalPawnMove(move):
+                if self.isLegalMove(move,safeMode):
                     returnList.append(move)
         return returnList
 
-    def possibleBishopMoves(self,color,row,col):
+    def possibleBishopMoves(self,color,row,col,safeMode):
         returnList = []
         piece = self.grid[row][col]
 
         for a in range(8):
             for b in range(8):
                 move = [piece[1],piece[0],row,col,a,b]
-                if self.isLegalBishopMove(move):
+                if self.isLegalMove(move,safeMode):
                     returnList.append(move[:])
         return returnList
 
-    def possibleRookMoves(self,color,row,col):
+    def possibleRookMoves(self,color,row,col,safeMode):
         returnList = []
         piece = self.grid[row][col]
 
         for i in range(8):
             move = [piece[1],piece[0],row,col,i,col]
-            if self.isLegalRookMove(move):
+            if self.isLegalMove(move,safeMode):
                 returnList.append(move[:])
             move[4] = row
             move[5] = i
-            if self.isLegalRookMove(move):
+            if self.isLegalMove(move,safeMode):
                 returnList.append(move[:])
 
         return returnList
 
-    def possibleKnightMoves(self,color,row,col):
+    def possibleKnightMoves(self,color,row,col,safeMode):
         returnList = []
         piece = self.grid[row][col]
 
         move = [piece[1],piece[0],row,col,row+1,col+2]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row-1,col+2]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row+1,col-2]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row-1,col-2]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row+2,col+1]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row+2,col-1]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row-2,col+1]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         move = [piece[1],piece[0],row,col,row-2,col-1]
-        if self.isLegalKnightMove(move): returnList.append(move[:])
+        if self.isLegalMove(move,safeMode): returnList.append(move[:])
 
         return returnList
 
-    def possibleKingMoves(self,color,row,col):
+    def possibleKingMoves(self,color,row,col,safeMode):
         returnList = []
         piece = self.grid[row][col]
 
         for a in range(row-1,row+2):
             for b in range(col-1,col+2):
                 move = [piece[1],piece[0],row,col,a,b]
-                if self.isLegalKingMove(move):
+                if self.isLegalMove(move,safeMode):
                     returnList.append(move)
 
         return returnList
 
-    def possibleColorMoves(self,color):#all of the possible moves that a player (specified by the color) can make
+    def possibleColorMoves(self,color,safeMode):#all of the possible moves that a player (specified by the color) can make
         foundMoves = []
 
         for row in range(8):
@@ -231,16 +231,16 @@ class Board:
                 piece = self.grid[row][column]
                 if len(piece) != 0:
                     if self.grid[row][column][1]==color:
-                        pieceMoves = self.possiblePieceMoves(row,column)
+                        pieceMoves = self.possiblePieceMoves(row,column,safeMode)
                         if len(pieceMoves)!=0:
                             foundMoves.extend(pieceMoves)
-
-
 
         return foundMoves
 
 
     def isLegalMove(self,move,safeMove): #move is being passed in the format: ["color","type",row,column,rowTo,columnTo]
+        if move[4] > 7 or move[4] < 0 or move[5] > 7 or move[4] < 0:
+            return False
         pieceType = move[1]
         if safeMove:
             if self.isCheck(move[0]):
@@ -248,6 +248,12 @@ class Board:
                 if self.isCheck(move[0]):
                     return False
                 self.undoMove()
+
+            '''self.movePiece(move)
+            if self.isCheck(move[0]):
+                self.undoMove()
+                return False
+            self.undoMove()'''
 
         if not (pieceType+move[0] == self.grid[move[2]][move[3]]): #the piece has to be there
             return False
@@ -419,7 +425,10 @@ class Board:
         self.gridCache.append([i[:] for i in self.grid])#because python takes over the control of pointers and such, this is the only way to make it not update with self.grid
 
         self.grid[move[2]][move[3]] = ""
-        self.grid[move[4]][move[5]] = move[1]+move[0]
+        try:
+            self.grid[move[4]][move[5]] = move[1]+move[0]
+        except IndexError:
+            print "I tried to do the move",move
 
     def isLegalCastle(self,color,move):#castles are in the format ["castle",withRookRow,withRookCol]
 
@@ -519,18 +528,18 @@ class Board:
 class Game():
 
     def __init__(self,tuningValues,testing):
-        if testing:
-            self.playOther()
+        self.board = Board()
         self.pieceValues = [tuningValues[i] for i in range(6)]
         self.movementCoefficients = [tuningValues[i] for i in range(6,12)]
-        self.board = Board()
-
-        if input("how many players?")==1:
-            self.gameType = 1
-            self.playSinglePlayer()
+        if testing:
+            self.playOther()
         else:
-            self.gameType = 2
-            self.playGame()
+            if input("how many players?")==1:
+                self.gameType = 1
+                self.playSinglePlayer()
+            else:
+                self.gameType = 2
+                self.playGame()
 
     def playOther(self):
         pass
@@ -556,6 +565,7 @@ class Game():
             whoseTurn = ("b" if whoseTurn == "w" else "w")
             if whoseTurn == playerColor:
                 self.board.printGrid()
+                print "worth of this state is:",self.evaluateBoard(compColor)
                 self.board.takePlayerMove(whoseTurn)
             else:
                 self.board.movePiece(self.bestMove(compColor))
@@ -567,7 +577,7 @@ class Game():
         if movesLeft > 0:
             self.board.movePiece(move)
             color = ("b" if move[0] == "w" else "w")
-            possMoves = self.board.possibleColorMoves(color)
+            possMoves = self.board.possibleColorMoves(color,False)
             if isComp:
                 best = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
                 for move in possMoves:
@@ -584,7 +594,9 @@ class Game():
                 self.board.undoMove()
                 return worst
         else:#this is now if there are no more moves to look into the future
+            self.board.movePiece(move)
             compColor = (move[0] if isComp else ("w" if move[0]=="b" else "b"))
+            self.board.undoMove()
             return self.evaluateBoard(compColor)
 
     def evaluateBoard(self,forColor):#evaluates the worth of the board for a given color
@@ -601,12 +613,13 @@ class Game():
                 else:
                     value -= self.evaluatePieceValue(row,col)
 
+
         return value
 
     def evaluatePieceValue(self,row,col):
         piece = self.board.grid[row][col]
 
-        distance = (row if piece[0]=="w" else (7-row))
+        distance = (row if piece[1]=="w" else (7-row))
 
         #TODO: get better values for the following values from machine learning
 
@@ -617,7 +630,7 @@ class Game():
 
 
     def bestMove(self,color):#compTurn is boolean for if it is the computer's turn
-        possMoves = self.board.possibleColorMoves(color)
+        possMoves = self.board.possibleColorMoves(color,False)
         best = [self.evaluateMove(possMoves[0],2,True),possMoves[0]]
         for move in possMoves:
             curEval = self.evaluateMove(move,2,True)
@@ -627,4 +640,5 @@ class Game():
 
 
 if __name__ == "__main__":
-    game = Game([1,2,3,4,5,1,2,3,4,5],False)
+    #order is: Pawn, Queen, Bishop, King, Rook, Knight
+    game = Game([1,10,4,1000,5,3,0.3,0.1,0.3,-1,0.3,0.5],False)
