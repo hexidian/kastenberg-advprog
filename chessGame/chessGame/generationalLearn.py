@@ -12,6 +12,10 @@ class Species:
 
         self.randomness = randomness
 
+        self.currentGeneration = [[random.randint(0,values[i]) for i in range(len(values))] for ctzn in range(genSize)]
+
+        print "the first generation is",self.currentGeneration
+
         #each citizen of a generation will simply be a list of values
 
         #self.currentGeneration = [[random.randint(0,values[i]) for i in range(len(values))] for j in range(genSize)] #just establishes a first generation
@@ -56,6 +60,7 @@ class Competition:
 
     def compete(self,playerA,playerB):
         whoseTurn = "w"
+        playerA.board.printGrid()
         while not (playerA.board.isCheckmate(whoseTurn)):
             move = (playerA if whoseTurn=="w" else playerB).bestMove(whoseTurn)
             playerA.board.movePiece(move)

@@ -575,6 +575,10 @@ class Game():
 
         if movesLeft > 0:
             self.board.movePiece(move)
+            if isComp:
+                if self.board.isCheck(move[0]):
+                    self.board.undoMove()
+                    return -10000
             color = ("b" if move[0] == "w" else "w")
             possMoves = self.board.possibleColorMoves(color,False)
             if isComp:
@@ -620,7 +624,7 @@ class Game():
 
         #TODO: get better values for the following values from machine learning
 
-        startVals = {"P":self.pieceValues[0],"Q":self.pieceValues[1],"B":self.pieceValues[2],"K":self.pieceValues[3],"R":self.pieceValues[4],"N":self.pieceValues[5]}
+        startVals = {"P":self.pieceValues[0],"Q":self.pieceValues[1],"B":self.pieceValues[2],"K":100000,"R":self.pieceValues[4],"N":self.pieceValues[5]}
         distanceCoefficients = {"P":self.movementCoefficients[0],"Q":self.movementCoefficients[1],"B":self.movementCoefficients[2],"K":self.movementCoefficients[3],"R":self.movementCoefficients[4],"N":self.movementCoefficients[5]}
 
         return (startVals[piece[0]]+(distanceCoefficients[piece[0]]*distance))
