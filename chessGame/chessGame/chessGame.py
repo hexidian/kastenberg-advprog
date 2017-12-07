@@ -582,6 +582,8 @@ class Game():
             color = ("b" if move[0] == "w" else "w")
             possMoves = self.board.possibleColorMoves(color,False)
             if isComp:
+                if len(possMoves) == 0:
+                    return -100
                 best = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
                 for nextMove in possMoves:
                     curEval = self.evaluateMove(nextMove,movesLeft-1,(not isComp))
@@ -589,6 +591,8 @@ class Game():
                 self.board.undoMove()
                 return best
             else:
+                if len(possMoves) == 0:
+                    return 100
                 worst = self.evaluateMove(possMoves[0],movesLeft-1,(not isComp))
                 for nextMove in possMoves:
                     curEval = self.evaluateMove(nextMove,movesLeft-1,(not isComp))
