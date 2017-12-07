@@ -565,7 +565,6 @@ class Game():
             whoseTurn = ("b" if whoseTurn == "w" else "w")
             if whoseTurn == playerColor:
                 self.board.printGrid()
-                print "worth of this state is:",self.evaluateBoard(compColor)
                 self.board.takePlayerMove(whoseTurn)
             else:
                 self.board.movePiece(self.bestMove(compColor))
@@ -603,7 +602,6 @@ class Game():
     def evaluateBoard(self,forColor):#evaluates the worth of the board for a given color
 
         value = 0
-
         for row in range(8):
             for col in range(8):
                 piece = self.board.grid[row][col]
@@ -613,8 +611,6 @@ class Game():
                     value += self.evaluatePieceValue(row,col)
                 else:
                     value -= self.evaluatePieceValue(row,col)
-
-
         return value
 
     def evaluatePieceValue(self,row,col):

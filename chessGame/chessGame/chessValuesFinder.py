@@ -24,4 +24,4 @@ if __name__ == "__main__":
                 else:
                     scoresA[a] += 1
                     scoresB[b] += 1
-        #now need to test it and breed them
+        #now need to test it and breed them; I will find the index of the best score and then do Species.breedGeneration(best) with the best one
